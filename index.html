@@ -6,64 +6,104 @@
     <title>剪刀石頭布遊戲</title>
     <style>
         body {
-           <h1>Displaying an Image from GitHub</h1>
-    <img src="https://raw.githubusercontent.com/chessplayer-mimi/picture/main/images/background.png" alt="Description of Image">
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
         }
-
+        #gameContainer {
+            position: relative;
+            width: 1500px;
+            height: 600px;
+            margin: 0 auto;
+            background: url('https://thumbsnap.com/s/7YuY2cDC.jpg') no-repeat center center;
+            background-size: cover;
+            border-radius: 10px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #nicknameScreen, #selectionScreen, #gameScreen, #leaderboardScreen {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px auto;
+            width: 100%;
+            text-align: center;
+        }
         #gameCanvas {
-            background-color: rgba(255, 255, 255, 0.8); /* 讓遊戲畫布有一定透明度，與背景圖搭配 */
+            display: block;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.5);
         }
-
-        h2, p, span {
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* 添加文字陰影以提高可讀性 */
+        #counter {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .count {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        #resetButtonContainer {
+            margin-top: 20px;
+        }
+        #resultMessage {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        h2 {
+            color: #333;
         }
     </style>
 </head>
 <body>
-    <!-- 用戶輸入暱稱界面 -->
-    <div id="nicknameScreen">
-        <h2>請輸入您的暱稱</h2>
-        <input type="text" id="nicknameInput">
-        <button onclick="startGame()">開始遊戲</button>
-    </div>
-    <!-- 用戶選擇界面 -->
-    <div id="selectionScreen" style="display: none;">
-        <h2>請選擇你認為會贏的物品</h2>
-        <button onclick="selectChoice('scissors')">剪刀</button>
-        <button onclick="selectChoice('rock')">石頭</button>
-        <button onclick="selectChoice('paper')">布</button>
-    </div>
-    <div id="gameDescription">
-        <h2>遊戲簡介：剪刀石頭布大戰爭！！你賭誰贏呢？總共有三十個物品，剪刀、石頭、布各占十個。當剪刀碰到石頭時就會變成石頭，依此類推。然而，事情沒有這麼簡單。黑洞出現了！！！他會隨機出現在任何地方，時間地點都不固定，碰到黑洞的物品都會隨機變成三種中的一種。最後三十個統一世界的物品就會成王！你，賭嗎？
-        </h2>
-    </div>
-    <!-- 遊戲界面 -->
-    <div id="gameScreen" style="display: none;">
-        <div id="counter">
-            <div class="count">
-                <span>剪刀: <span id="scissorsCount">0</span></span>
+    <div id="gameContainer">
+        <!-- 用戶輸入暱稱界面 -->
+        <div id="nicknameScreen">
+            <h2>請輸入您的暱稱</h2>
+            <input type="text" id="nicknameInput">
+            <button onclick="startGame()">開始遊戲</button>
+        </div>
+        <!-- 用户选择界面 -->
+        <div id="selectionScreen" style="display: none;">
+            <h2>請選擇你認為會贏的物品</h2>
+            <button onclick="selectChoice('scissors')">剪刀</button>
+            <button onclick="selectChoice('rock')">石頭</button>
+            <button onclick="selectChoice('paper')">布</button>
+        </div>
+        <div id="gameDescription">
+            <h2>遊戲簡介：剪刀石頭布大戰爭！！你賭誰贏呢？總共有三十個物品，剪刀、石頭、布各占十個。當剪刀碰到石頭時就會變成石頭，依此類推。然而，事情沒有這麼簡單。黑洞出現了！！！他會隨機出現在任何地方，時間地點都不固定，碰到黑洞的物品都會隨機變成三種中的一種。最後三十個統一世界的物品就會成王！你，賭嗎？
+            </h2>
+        </div>
+        <!-- 游戏界面 -->
+        <div id="gameScreen" style="display: none;">
+            <div id="counter">
+                <div class="count">
+                    <span>剪刀: <span id="scissorsCount">0</span></span>
+                </div>
+                <div class="count">
+                    <span>石頭: <span id="rockCount">0</span></span>
+                </div>
+                <div class="count">
+                    <span>布: <span id="paperCount">0</span></span>
+                </div>
             </div>
-            <div class="count">
-                <span>石頭: <span id="rockCount">0</span></span>
-            </div>
-            <div class="count">
-                <span>布: <span id="paperCount">0</span></span>
+            <canvas id="gameCanvas" width="1500" height="600"></canvas>
+            <div id="gameInfo">
+                <div id="resetButtonContainer" style="display: none;">
+                    <button id="resetButton" onclick="resetGame()">重置遊戲</button>
+                    <button id="nextLevelButton" onclick="startNextLevel()">下一關</button>
+                </div>
+                <p id="resultMessage"></p>
             </div>
         </div>
-        <canvas id="gameCanvas" width="1500" height="600"></canvas>
-        <div id="gameInfo">
-            <div id="resetButtonContainer" style="display: none;">
-                <button id="resetButton" onclick="resetGame()">重置遊戲</button>
-                <button id="nextLevelButton" onclick="startNextLevel()">下一關</button>
-            </div>
-            <p id="resultMessage"></p>
+        <!-- 排行榜 -->
+        <div id="leaderboardScreen" style="display: none;">
+            <h2>排行榜</h2>
+            <ul id="leaderboard"></ul>
+            <button onclick="restartGame()">重新開始</button>
         </div>
-    </div>
-    <!-- 排行榜 -->
-    <div id="leaderboardScreen" style="display: none;">
-        <h2>排行榜</h2>
-        <ul id="leaderboard"></ul>
-        <button onclick="restartGame()">重新開始</button>
     </div>
 
     <script>
@@ -82,7 +122,7 @@
         const TYPE_ROCK = 'rock';
         const TYPE_PAPER = 'paper';
 
-        // 圖片路徑
+        // 图片路径
         const IMAGE_PATHS = {
             [TYPE_SCISSORS]: 'https://i.imgur.com/8Bc0jKL.png',
             [TYPE_ROCK]: 'https://i.imgur.com/8l6IGrR.png',
@@ -97,10 +137,10 @@
         let leaderboardData = [];
         let hasStartedFirstLevel = false;
 
-        // 圖片对象
+        // 图片对象
         const images = {};
 
-        // 預加載圖片
+        // 预加载图片
         function loadImages(callback) {
             let loadedImages = 0;
             const totalImages = Object.keys(IMAGE_PATHS).length;
@@ -199,9 +239,9 @@
         }
 
         function checkGameEnd() {
-            const uniqueTypes = new Set(items.map(item => item.type));
-            if (uniqueTypes.size === 1) {
-                document.getElementById('resetButtonContainer').style.display = 'block';
+            const types = items.map(item => item.type);
+            const uniqueTypes = [...new Set(types)];
+            if (uniqueTypes.length === 1) {
                 displayResultMessage();
                 return true;
             }
@@ -355,4 +395,3 @@
     </script>
 </body>
 </html>
-
