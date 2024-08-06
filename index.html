@@ -7,14 +7,8 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- 用戶輸入暱稱界面 -->
-    <div id="nicknameScreen">
-        <h2>請輸入您的暱稱</h2>
-        <input type="text" id="nicknameInput">
-        <button onclick="startGame()">開始遊戲</button>
-    </div>
-    <!-- 用戶選擇界面 -->
-    <div id="selectionScreen" style="display: none;">
+    <!-- 用户选择界面 -->
+    <div id="selectionScreen">
         <h2>請選擇你認為會贏的物品</h2>
         <button onclick="selectChoice('scissors')">剪刀</button>
         <button onclick="selectChoice('rock')">石頭</button>
@@ -24,7 +18,7 @@
         <h2>遊戲簡介：剪刀石頭布大戰爭！！你賭誰贏呢？總共有三十個物品，剪刀、石頭、布各占十個。當剪刀碰到石頭時就會變成石頭，依此類推。然而，事情沒有這麼簡單。黑洞出現了！！！他會隨機出現在任何地方，時間地點都不固定，碰到黑洞的物品都會隨機變成三種中的一種。最後三十個統一世界的物品就會成王！你，賭嗎？
         </h2>
     </div>
-    <!-- 遊戲界面 -->
+    <!-- 游戏界面 -->
     <div id="gameScreen" style="display: none;">
         <div id="counter">
             <div class="count">
@@ -41,16 +35,9 @@
         <div id="gameInfo">
             <div id="resetButtonContainer" style="display: none;">
                 <button id="resetButton" onclick="resetGame()">重置遊戲</button>
-                <button id="nextLevelButton" onclick="startNextLevel()">下一關</button>
             </div>
             <p id="resultMessage"></p>
         </div>
-    </div>
-    <!-- 排行榜 -->
-    <div id="leaderboardScreen" style="display: none;">
-        <h2>排行榜</h2>
-        <ul id="leaderboard"></ul>
-        <button onclick="restartGame()">重新開始</button>
     </div>
 
     <script>
@@ -69,28 +56,21 @@
         const TYPE_ROCK = 'rock';
         const TYPE_PAPER = 'paper';
 
-        // 圖片路徑
+        // 图片路径
         const IMAGE_PATHS = {
-            [TYPE_SCISSORS]: 'https://i.imgur.com/8Bc0jKL.png',
-            [TYPE_ROCK]: 'https://i.imgur.com/8l6IGrR.png',
-            [TYPE_PAPER]: 'https://i.imgur.com/2lFbPoZ.png'
+            [TYPE_SCISSORS]: 'C:/Users/user-asus/Pictures/45.png',
+            [TYPE_ROCK]: 'C:/Users/user-asus/Pictures/4.png',
+            [TYPE_PAPER]: 'C:/Users/user-asus/Pictures/12.png'
         };
 
         let items = [];
         let hole = null;
         let userChoice = null;
-        let userName = null;
-        let userScore = 0;
-        let leaderboardData = [];
-        let hasStartedFirstLevel = false;
-        //底圖
-      
 
-
-        // 圖片对象
+        // 图片对象
         const images = {};
 
-        // 預加載圖片
+        // 预加载图片
         function loadImages(callback) {
             let loadedImages = 0;
             const totalImages = Object.keys(IMAGE_PATHS).length;
@@ -278,71 +258,12 @@
             if (paperCount === maxCount) winningType = TYPE_PAPER;
 
             let resultMessage = '你輸了！';
-            if (hasStartedFirstLevel) {
-                document.getElementById('resetButton').style.display = 'inline-block';
-            }
-            document.getElementById('nextLevelButton').style.display = 'none';
-
             if (userChoice === winningType) {
                 resultMessage = '你贏了！';
-                userScore++;
-                document.getElementById('resetButton').style.display = 'none';
-                document.getElementById('nextLevelButton').style.display = 'inline-block';
             }
 
             document.getElementById('resultMessage').innerText = resultMessage;
-
-            if (resultMessage === '你輸了！' && hasStartedFirstLevel) {
-                showLeaderboard();
-            }
         }
-
-        function startGame() {
-            userName = document.getElementById('nicknameInput').value;
-            if (userName.trim() === '') {
-                alert('請輸入暱稱');
-                return;
-            }
-            document.getElementById('nicknameScreen').style.display = 'none';
-            document.getElementById('selectionScreen').style.display = 'block';
-            hasStartedFirstLevel = true;
-        }
-
-        function showLeaderboard() {
-            document.getElementById('gameScreen').style.display = 'none';
-            document.getElementById('leaderboardScreen').style.display = 'block';
-
-            leaderboardData.push({ name: userName, score: userScore });
-            leaderboardData.sort((a, b) => b.score - a.score);
-
-            const leaderboard = document.getElementById('leaderboard');
-            leaderboard.innerHTML = '';
-            leaderboardData.forEach(entry => {
-                const leaderboardItem = document.createElement('li');
-                leaderboardItem.textContent = `${entry.name}: ${entry.score} 分`;
-                leaderboard.appendChild(leaderboardItem);
-            });
-        }
-
-        function restartGame() {
-            document.getElementById('leaderboardScreen').style.display = 'none';
-            document.getElementById('nicknameScreen').style.display = 'block';
-            userScore = 0;
-            
-            // 隱藏“下一關”按鈕和“你贏了”或“你輸了”消息
-            document.getElementById('resultMessage').innerText = '';
-            hasStartedFirstLevel = false;
-        }
-
-        function startNextLevel() {
-            document.getElementById('resetButtonContainer').style.display = 'none';
-            document.getElementById('resultMessage').innerText = '';
-            userChoice = null;
-            document.getElementById('selectionScreen').style.display = 'block';
-            document.getElementById('gameScreen').style.display = 'none';
-            document.getElementById('gameDescription').style.display = 'block'; // 顯示說明文字
-        }
-       
     </script>
 </body>
 </html>
