@@ -1,1 +1,2 @@
 # rock-peper-scissors-war
+There are a total of thirty items: ten scissors, ten rocks, and ten papers. When scissors collide with rocks, they will turn into rocks, and so on. However, it's not that simple. A black hole has appeared!!! It can appear anywhere at any time, and any item that touches the black hole will randomly transform into one of the three types. The last thirty unified items in the world will become the ruler! Will you take the bet?
