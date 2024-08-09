@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>剪刀石頭布遊戲</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #gameContainer {
+            position: relative;
+            width: 1500px;
+            height: 600px;
+            margin: 0 auto;
+            background: url('https://thumbsnap.com/s/7YuY2cDC.jpg') no-repeat center center;
+            background-size: cover;
+            border-radius: 10px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #nicknameScreen, #selectionScreen, #gameScreen, #leaderboardScreen {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px auto;
+            width: 100%;
+            text-align: center;
+        }
+        #gameCanvas {
+            display: block;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.5);
+        }
+        #counter {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .count {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        #resetButtonContainer {
+            margin-top: 20px;
+        }
+        #resultMessage {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        h2 {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <!-- 用戶輸入暱稱界面 -->
+        <div id="nicknameScreen">
+            <h2>請輸入您的暱稱</h2>
+            <input type="text" id="nicknameInput">
+            <button onclick="startGame()">開始遊戲</button>
+        </div>
+        <!-- 用户选择界面 -->
+        <div id="selectionScreen" style="display: none;">
+            <h2>請選擇你認為會贏的物品</h2>
+            <button onclick="selectChoice('scissors')">剪刀</button>
+            <button onclick="selectChoice('rock')">石頭</button>
+            <button onclick="selectChoice('paper')">布</button>
+        </div>
+        <div id="gameDescription">
+            <h2>遊戲簡介：剪刀石頭布大戰爭！！你賭誰贏呢？總共有三十個物品，剪刀、石頭、布各占十個。當剪刀碰到石頭時就會變成石頭，依此類推。然而，事情沒有這麼簡單。黑洞出現了！！！他會隨機出現在任何地方，時間地點都不固定，碰到黑洞的物品都會隨機變成三種中的一種。最後三十個統一世界的物品就會成王！你，賭嗎？
+            </h2>
+        </div>
+        <!-- 游戏界面 -->
+        <div id="gameScreen" style="display: none;">
+            <div id="counter">
+                <div class="count">
+                    <span>剪刀: <span id="scissorsCount">0</span></span>
+                </div>
+                <div class="count">
+                    <span>石頭: <span id="rockCount">0</span></span>
+                </div>
+                <div class="count">
+                    <span>布: <span id="paperCount">0</span></span>
+                </div>
+            </div>
+            <canvas id="gameCanvas" width="1500" height="600"></canvas>
+            <div id="gameInfo">
+                <div id="resetButtonContainer" style="display: none;">
+                    <button id="resetButton" onclick="resetGame()">重置遊戲</button>
+                    <button id="nextLevelButton" onclick="startNextLevel()">下一關</button>
+                </div>
+                <p id="resultMessage"></p>
+            </div>
+        </div>
+        <!-- 排行榜 -->
+        <div id="leaderboardScreen" style="display: none;">
+            <h2>排行榜</h2>
+            <ul id="leaderboard"></ul>
+            <button onclick="restartGame()">重新開始</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const ITEM_SIZE = 20;
+        const NUM_ITEMS = 10;
+        const SPEED = 2;
+        const HOLE_MIN_SIZE = 30;
+        const HOLE_MAX_SIZE = 100;
+        const HOLE_INTERVAL = 10000;
+        const HOLE_DURATION = 3000;
+
+        const TYPE_SCISSORS = 'scissors';
+        const TYPE_ROCK = 'rock';
+        const TYPE_PAPER = 'paper';
+
+        // 图片路径
+        const IMAGE_PATHS = {
+            [TYPE_SCISSORS]: 'https://i.imgur.com/8Bc0jKL.png',
+            [TYPE_ROCK]: 'https://i.imgur.com/8l6IGrR.png',
+            [TYPE_PAPER]: 'https://i.imgur.com/2lFbPoZ.png'
+        };
+
+        let items = [];
+        let hole = null;
+        let userChoice = null;
+        let userName = null;
+        let userScore = 0;
+        let leaderboardData = [];
+        let hasStartedFirstLevel = false;
+
+        // 图片对象
+        const images = {};
+
+        // 预加载图片
+        function loadImages(callback) {
+            let loadedImages = 0;
+            const totalImages = Object.keys(IMAGE_PATHS).length;
+
+            for (const type in IMAGE_PATHS) {
+                images[type] = new Image();
+                images[type].src = IMAGE_PATHS[type];
+                images[type].onload = () => {
+                    loadedImages++;
+                    if (loadedImages === totalImages) {
+                        callback();
+                    }
+                };
+            }
+        }
+
+        function createRandomItem(type) {
+            return {
+                type: type,
+                x: Math.random() * (canvas.width - ITEM_SIZE),
+                y: Math.random() * (canvas.height - ITEM_SIZE),
+                width: ITEM_SIZE,
+                height: ITEM_SIZE,
+                dx: Math.random() * SPEED * 2 - SPEED,
+                dy: Math.random() * SPEED * 2 - SPEED
+            };
+        }
+
+        function createRandomHole() {
+            const size = Math.random() * (HOLE_MAX_SIZE - HOLE_MIN_SIZE) + HOLE_MIN_SIZE;
+            hole = {
+                x: Math.random() * (canvas.width - size),
+                y: Math.random() * (canvas.height - size),
+                width: size,
+                height: size
+            };
+            setTimeout(() => {
+                hole = null;
+            }, HOLE_DURATION);
+        }
+
+        function initGame() {
+            items = [];
+            for (let i = 0; i < NUM_ITEMS; i++) {
+                items.push(createRandomItem(TYPE_SCISSORS));
+                items.push(createRandomItem(TYPE_ROCK));
+                items.push(createRandomItem(TYPE_PAPER));
+            }
+            updateCounts();
+            startHoleLoop();
+        }
+
+        function drawItem(item) {
+            const img = images[item.type];
+            if (img) {
+                ctx.drawImage(img, item.x, item.y, ITEM_SIZE, ITEM_SIZE);
+            }
+        }
+
+        function drawHole(hole) {
+            if (hole) {
+                ctx.fillStyle = 'black';
+                ctx.fillRect(hole.x, hole.y, hole.width, hole.height);
+            }
+        }
+
+        function moveItem(item) {
+            item.x += item.dx;
+            item.y += item.dy;
+
+            if (item.x <= 0 || item.x + item.width >= canvas.width) {
+                item.dx = -item.dx;
+            }
+            if (item.y <= 0 || item.y + item.height >= canvas.height) {
+                item.dy = -item.dy;
+            }
+        }
+
+        function checkCollision(item1, item2) {
+            return (
+                item1.x < item2.x + item2.width &&
+                item1.x + item1.width > item2.x &&
+                item1.y < item2.y + item2.height &&
+                item1.y + item1.height > item2.y
+            );
+        }
+
+        function handleCollision(item1, item2) {
+            if (item1.type === TYPE_SCISSORS && item2.type === TYPE_ROCK) {
+                item1.type = TYPE_ROCK;
+            } else if (item1.type === TYPE_ROCK && item2.type === TYPE_PAPER) {
+                item1.type = TYPE_PAPER;
+            } else if (item1.type === TYPE_PAPER && item2.type === TYPE_SCISSORS) {
+                item1.type = TYPE_SCISSORS;
+            }
+        }
+
+        function checkGameEnd() {
+            const types = items.map(item => item.type);
+            const uniqueTypes = [...new Set(types)];
+            if (uniqueTypes.length === 1) {
+                displayResultMessage();
+                return true;
+            }
+            return false;
+        }
+
+        function updateCounts() {
+            const scissorsCount = items.filter(item => item.type === TYPE_SCISSORS).length;
+            const rockCount = items.filter(item => item.type === TYPE_ROCK).length;
+            const paperCount = items.filter(item => item.type === TYPE_PAPER).length;
+
+            document.getElementById('scissorsCount').innerText = scissorsCount;
+            document.getElementById('rockCount').innerText = rockCount;
+            document.getElementById('paperCount').innerText = paperCount;
+        }
+
+        function resetGame() {
+            document.getElementById('resetButtonContainer').style.display = 'none';
+            document.getElementById('resultMessage').innerText = '';
+            userChoice = null;
+            document.getElementById('selectionScreen').style.display = 'block';
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('gameDescription').style.display = 'block'; // 顯示說明文字
+        }
+
+        function startHoleLoop() {
+            setInterval(() => {
+                createRandomHole();
+            }, HOLE_INTERVAL);
+        }
+
+        function randomizeType(item) {
+            const types = [TYPE_SCISSORS, TYPE_ROCK, TYPE_PAPER];
+            item.type = types[Math.floor(Math.random() * types.length)];
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawHole(hole);
+            items.forEach((item, index) => {
+                moveItem(item);
+                drawItem(item);
+
+                if (hole && checkCollision(item, hole)) {
+                    randomizeType(item);
+                }
+
+                for (let i = 0; i < items.length; i++) {
+                    if (i !== index && checkCollision(item, items[i])) {
+                        handleCollision(item, items[i]);
+                    }
+                }
+            });
+
+            updateCounts();
+
+            if (!checkGameEnd()) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function selectChoice(choice) {
+            userChoice = choice;
+            document.getElementById('selectionScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            document.getElementById('gameDescription').style.display = 'none'; // 隱藏說明文字
+            loadImages(() => {
+                initGame();
+                gameLoop();
+            });
+        }
+
+        function displayResultMessage() {
+            const scissorsCount = items.filter(item => item.type === TYPE_SCISSORS).length;
+            const rockCount = items.filter(item => item.type === TYPE_ROCK).length;
+            const paperCount = items.filter(item => item.type === TYPE_PAPER).length;
+
+            let maxCount = Math.max(scissorsCount, rockCount, paperCount);
+            let winningType = '';
+
+            if (scissorsCount === maxCount) winningType = TYPE_SCISSORS;
+            if (rockCount === maxCount) winningType = TYPE_ROCK;
+            if (paperCount === maxCount) winningType = TYPE_PAPER;
+
+            let resultMessage = '你輸了！';
+            if (hasStartedFirstLevel) {
+                document.getElementById('resetButton').style.display = 'inline-block';
+            }
+            document.getElementById('nextLevelButton').style.display = 'none';
+
+            if (userChoice === winningType) {
+                resultMessage = '你贏了！';
+                userScore++;
+                document.getElementById('resetButton').style.display = 'none';
+                document.getElementById('nextLevelButton').style.display = 'inline-block';
+            }
+
+            document.getElementById('resultMessage').innerText = resultMessage;
+
+            if (resultMessage === '你輸了！' && hasStartedFirstLevel) {
+                showLeaderboard();
+            }
+        }
+
+        function startGame() {
+            userName = document.getElementById('nicknameInput').value;
+            if (userName.trim() === '') {
+                alert('請輸入暱稱');
+                return;
+            }
+            document.getElementById('nicknameScreen').style.display = 'none';
+            document.getElementById('selectionScreen').style.display = 'block';
+            hasStartedFirstLevel = true;
+        }
+
+        function showLeaderboard() {
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('leaderboardScreen').style.display = 'block';
+
+            leaderboardData.push({ name: userName, score: userScore });
+            leaderboardData.sort((a, b) => b.score - a.score);
+
+            const leaderboard = document.getElementById('leaderboard');
+            leaderboard.innerHTML = '';
+            leaderboardData.forEach(entry => {
+                const leaderboardItem = document.createElement('li');
+                leaderboardItem.textContent = `${entry.name}: ${entry.score} 分`;
+                leaderboard.appendChild(leaderboardItem);
+            });
+        }
+
+        function restartGame() {
+            document.getElementById('leaderboardScreen').style.display = 'none';
+            document.getElementById('nicknameScreen').style.display = 'block';
+            userScore = 0;
+            
+            // 隱藏“下一關”按鈕和“你贏了”或“你輸了”消息
+            document.getElementById('resultMessage').innerText = '';
+            hasStartedFirstLevel = false;
+        }
+
+        function startNextLevel() {
+            document.getElementById('resetButtonContainer').style.display = 'none';
+            document.getElementById('resultMessage').innerText = '';
+            userChoice = null;
+            document.getElementById('selectionScreen').style.display = 'block';
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('gameDescription').style.display = 'block'; // 顯示說明文字
+        }
+    </script>
+</body>
+</html>
