@@ -1,1 +1,1 @@
-# rock-peper-scissors-game
+# rock-peper-scissors-war
