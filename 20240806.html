@@ -354,7 +354,7 @@
                 data.sort((a, b) => b.score - a.score);
 
                 // Display top 10 scores
-                data.slice(0, 10).forEach(entry => {
+                data.slice(0, 20).forEach(entry => {
                     const leaderboardItem = document.createElement('li');
                     leaderboardItem.textContent = `${entry.name}: ${entry.score} 分`;
                     leaderboard.appendChild(leaderboardItem);
