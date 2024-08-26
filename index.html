@@ -4,34 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>剪刀石頭布遊戲</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-        }
-        #gameCanvas {
-            border: 1px solid #000;
-            margin-top: 20px;
-        }
-        #counter {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }
-        .count {
-            margin: 0 20px;
-        }
-        #resetButtonContainer {
-            margin-top: 20px;
-        }
-        #resultMessage {
-            margin-top: 20px;
-            font-size: 24px;
-            font-weight: bold;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <!-- 用戶輸入暱稱界面 -->
@@ -87,7 +60,7 @@
         // Import Firebase SDK from CDN
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-analytics.js";
-        import { getDatabase, ref, push, query, orderByChild, limitToLast, get } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
+        import { getDatabase, ref, push, query, orderByChild, get } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -132,7 +105,6 @@
         let userChoice = null;
         let userName = null;
         let userScore = 0;
-        let leaderboardData = [];
         let hasStartedFirstLevel = false;
 
         const images = {};
@@ -237,6 +209,7 @@
         function checkGameEnd() {
             const uniqueTypes = new Set(items.map(item => item.type));
             if (uniqueTypes.size === 1) {
+                document.getElementById('resetButtonContainer').style.display = 'block';
                 displayResultMessage();
                 return true;
             }
@@ -323,15 +296,16 @@
             if (paperCount === maxCount) winningType = TYPE_PAPER;
 
             let resultMessage = '你輸了！';
-
+            if (hasStartedFirstLevel) {
+                document.getElementById('resetButton').style.display = 'inline-block';
+            }
             document.getElementById('nextLevelButton').style.display = 'none';
 
             if (userChoice === winningType) {
                 resultMessage = '你贏了！';
                 userScore++;
+                document.getElementById('resetButton').style.display = 'none';
                 document.getElementById('nextLevelButton').style.display = 'inline-block';
-            } else {
-                document.getElementById('resetButton').style.display = 'inline-block';
             }
 
             document.getElementById('resultMessage').innerText = resultMessage;
@@ -364,8 +338,8 @@
             document.getElementById('gameScreen').style.display = 'none';
             document.getElementById('leaderboardScreen').style.display = 'block';
 
-            // Query the top 10 scores from the leaderboard
-            const queryRef = query(leaderboardRef, orderByChild('score'), limitToLast(10));
+            // Query all scores from the leaderboard and order them by score
+            const queryRef = query(leaderboardRef, orderByChild('score'));
             
             get(queryRef).then((snapshot) => {
                 const leaderboard = document.getElementById('leaderboard');
@@ -376,7 +350,11 @@
                     data.unshift(childSnapshot.val()); // Unshift to keep the highest score at the top
                 });
 
-                data.forEach(entry => {
+                // Sort the data array by score in descending order
+                data.sort((a, b) => b.score - a.score);
+
+                // Display top 10 scores
+                data.slice(0, 10).forEach(entry => {
                     const leaderboardItem = document.createElement('li');
                     leaderboardItem.textContent = `${entry.name}: ${entry.score} 分`;
                     leaderboard.appendChild(leaderboardItem);
