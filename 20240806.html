@@ -4,34 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>剪刀石頭布遊戲</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-        }
-        #gameCanvas {
-            border: 1px solid #000;
-            margin-top: 20px;
-        }
-        #counter {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }
-        .count {
-            margin: 0 20px;
-        }
-        #resetButtonContainer {
-            margin-top: 20px;
-        }
-        #resultMessage {
-            margin-top: 20px;
-            font-size: 24px;
-            font-weight: bold;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <!-- 用戶輸入暱稱界面 -->
@@ -237,6 +210,7 @@
         function checkGameEnd() {
             const uniqueTypes = new Set(items.map(item => item.type));
             if (uniqueTypes.size === 1) {
+                document.getElementById('resetButtonContainer').style.display = 'block';
                 displayResultMessage();
                 return true;
             }
@@ -323,15 +297,16 @@
             if (paperCount === maxCount) winningType = TYPE_PAPER;
 
             let resultMessage = '你輸了！';
-
+            if (hasStartedFirstLevel) {
+                document.getElementById('resetButton').style.display = 'inline-block';
+            }
             document.getElementById('nextLevelButton').style.display = 'none';
 
             if (userChoice === winningType) {
                 resultMessage = '你贏了！';
                 userScore++;
+                document.getElementById('resetButton').style.display = 'none';
                 document.getElementById('nextLevelButton').style.display = 'inline-block';
-            } else {
-                document.getElementById('resetButton').style.display = 'inline-block';
             }
 
             document.getElementById('resultMessage').innerText = resultMessage;
@@ -378,7 +353,7 @@
 
                 data.forEach(entry => {
                     const leaderboardItem = document.createElement('li');
-                    leaderboardItem.textContent = `${entry.name}: ${entry.score} 分`;
+                    leaderboardItem.textContent = ${entry.name}: ${entry.score} 分;
                     leaderboard.appendChild(leaderboardItem);
                 });
             });
