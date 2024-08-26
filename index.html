@@ -11,19 +11,21 @@
     <div id="nicknameScreen">
         <h2>請輸入您的暱稱</h2>
         <input type="text" id="nicknameInput">
-        <button onclick="startGame()">開始遊戲</button>
+        <button id="startGameButton">開始遊戲</button>
     </div>
+
     <!-- 用户选择界面 -->
     <div id="selectionScreen" style="display: none;">
         <h2>請選擇你認為會贏的物品</h2>
-        <button onclick="selectChoice('scissors')">剪刀</button>
-        <button onclick="selectChoice('rock')">石頭</button>
-        <button onclick="selectChoice('paper')">布</button>
+        <button id="selectChoiceButton1">剪刀</button>
+        <button id="selectChoiceButton2">石頭</button>
+        <button id="selectChoiceButton3">布</button>
     </div>
+
     <div id="gameDescription">
-        <h2>遊戲簡介：剪刀石頭布大戰爭！！你賭誰贏呢？總共有三十個物品，剪刀、石頭、布各占十個。當剪刀碰到石頭時就會變成石頭，依此類推。然而，事情沒有這麼簡單。黑洞出現了！！！他會隨機出現在任何地方，時間地點都不固定，碰到黑洞的物品都會隨機變成三種中的一種。最後三十個統一世界的物品就會成王！你，賭嗎？
-        </h2>
+        <h2>遊戲簡介：剪刀石頭布大戰爭！！你賭誰贏呢？總共有三十個物品，剪刀、石頭、布各占十個。當剪刀碰到石頭時就會變成石頭，依此類推。然而，事情沒有這麼簡單。黑洞出現了！！！他會隨機出現在任何地方，時間地點都不固定，碰到黑洞的物品都會隨機變成三種中的一種。最後三十個統一世界的物品就會成王！你，賭嗎？</h2>
     </div>
+
     <!-- 游戏界面 -->
     <div id="gameScreen" style="display: none;">
         <div id="counter">
@@ -40,26 +42,49 @@
         <canvas id="gameCanvas" width="1500" height="600"></canvas>
         <div id="gameInfo">
             <div id="resetButtonContainer" style="display: none;">
-                <button id="resetButton" onclick="resetGame()">重置遊戲</button>
-                <button id="nextLevelButton" onclick="startNextLevel()">下一關</button>
+                <button id="resetButton">重置遊戲</button>
+                <button id="nextLevelButton">下一關</button>
             </div>
             <p id="resultMessage"></p>
         </div>
     </div>
+
     <!-- 排行榜 -->
     <div id="leaderboardScreen" style="display: none;">
         <h2>排行榜</h2>
         <ul id="leaderboard"></ul>
-        <button onclick="restartGame()">重新開始</button>
+        <button id="restartGameButton">重新開始</button>
     </div>
 
-    <script>
+    <script type="module">
+        // Import Firebase SDK from CDN
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-analytics.js";
+        import { getDatabase, ref, push, query, orderByChild, limitToLast, get } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyCV78uY-viYUWHn8W9oWjn7Buza5tzjvyA",
+          authDomain: "rock-peper-scissors-game.firebaseapp.com",
+          databaseURL: "https://rock-peper-scissors-game-default-rtdb.firebaseio.com",
+          projectId: "rock-peper-scissors-game",
+          storageBucket: "rock-peper-scissors-game.appspot.com",
+          messagingSenderId: "381131338325",
+          appId: "1:381131338325:web:b9f9e0af5d0a9758dd9adc",
+          measurementId: "G-S2WL3J74TW"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const database = getDatabase(app);
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
         const ITEM_SIZE = 40;
         const NUM_ITEMS = 10;
-        const SPEED =8;
+        const SPEED = 8;
         const HOLE_MIN_SIZE = 30;
         const HOLE_MAX_SIZE = 100;
         const HOLE_INTERVAL = 10000;
@@ -69,7 +94,6 @@
         const TYPE_ROCK = 'rock';
         const TYPE_PAPER = 'paper';
 
-        // 图片路径
         const IMAGE_PATHS = {
             [TYPE_SCISSORS]: 'https://i.imgur.com/8Bc0jKL.png',
             [TYPE_ROCK]: 'https://i.imgur.com/8l6IGrR.png',
@@ -83,14 +107,9 @@
         let userScore = 0;
         let leaderboardData = [];
         let hasStartedFirstLevel = false;
-        //底圖
-      
 
-
-        // 图片对象
         const images = {};
 
-        // 预加载图片
         function loadImages(callback) {
             let loadedImages = 0;
             const totalImages = Object.keys(IMAGE_PATHS).length;
@@ -309,18 +328,34 @@
         }
 
         function showLeaderboard() {
+            // Save the user score to Firebase
+            const leaderboardRef = ref(database, 'leaderboard');
+            push(leaderboardRef, {
+                name: userName,
+                score: userScore
+            });
+
+            // Show the leaderboard
             document.getElementById('gameScreen').style.display = 'none';
             document.getElementById('leaderboardScreen').style.display = 'block';
 
-            leaderboardData.push({ name: userName, score: userScore });
-            leaderboardData.sort((a, b) => b.score - a.score);
+            // Query the top 10 scores from the leaderboard
+            const queryRef = query(leaderboardRef, orderByChild('score'), limitToLast(10));
+            
+            get(queryRef).then((snapshot) => {
+                const leaderboard = document.getElementById('leaderboard');
+                leaderboard.innerHTML = '';
 
-            const leaderboard = document.getElementById('leaderboard');
-            leaderboard.innerHTML = '';
-            leaderboardData.forEach(entry => {
-                const leaderboardItem = document.createElement('li');
-                leaderboardItem.textContent = `${entry.name}: ${entry.score} 分`;
-                leaderboard.appendChild(leaderboardItem);
+                const data = [];
+                snapshot.forEach(childSnapshot => {
+                    data.unshift(childSnapshot.val()); // Unshift to keep the highest score at the top
+                });
+
+                data.forEach(entry => {
+                    const leaderboardItem = document.createElement('li');
+                    leaderboardItem.textContent = ${entry.name}: ${entry.score} 分;
+                    leaderboard.appendChild(leaderboardItem);
+                });
             });
         }
 
@@ -329,7 +364,6 @@
             document.getElementById('nicknameScreen').style.display = 'block';
             userScore = 0;
             
-            // 隱藏“下一關”按鈕和“你贏了”或“你輸了”消息
             document.getElementById('resultMessage').innerText = '';
             hasStartedFirstLevel = false;
         }
@@ -342,6 +376,19 @@
             document.getElementById('gameScreen').style.display = 'none';
             document.getElementById('gameDescription').style.display = 'block'; // 顯示說明文字
         }
+
+        // 使用 addEventListener 綁定按鈕事件
+        document.getElementById('startGameButton').addEventListener('click', startGame);
+        document.getElementById('selectChoiceButton1').addEventListener('click', () => selectChoice('scissors'));
+        document.getElementById('selectChoiceButton2').addEventListener('click', () => selectChoice('rock'));
+        document.getElementById('selectChoiceButton3').addEventListener('click', () => selectChoice('paper'));
+        document.getElementById('resetButton').addEventListener('click', resetGame);
+        document.getElementById('nextLevelButton').addEventListener('click', startNextLevel);
+        document.getElementById('restartGameButton').addEventListener('click', restartGame);
+    </script>
+</body>
+</html>
+
        
     </script>
 </body>
