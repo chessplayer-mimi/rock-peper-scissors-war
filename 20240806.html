@@ -5,6 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>剪刀石頭布遊戲</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            background-image: url('picture/background3.png'); /* 替換為你的背景圖路徑 */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #nicknameScreen, #selectionScreen, #gameScreen, #leaderboardScreen {
+            background-color: transparent; /* 改為透明 */
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 90%;
+            box-shadow: none; /* 移除陰影 */
+        }
+
+        #gameCanvas {
+            display: block;
+            margin: 20px auto;
+            background-color: transparent; /* 使畫布背景透明 */
+            border: 1px solid #ccc;
+        }
+
+        #counter {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 10px;
+        }
+
+        .count {
+            font-size: 18px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        h2 {
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
     <!-- 用戶輸入暱稱界面 -->
@@ -22,11 +77,14 @@
         <button id="selectChoiceButton3">布</button>
     </div>
 
+    <!-- 遊戲簡介 -->
     <div id="gameDescription">
-        <h2>遊戲簡介：剪刀石頭布大戰爭！！你賭誰贏呢？總共有三十個物品，剪刀、石頭、布各占十個。當剪刀碰到石頭時就會變成石頭，依此類推。然而，事情沒有這麼簡單。黑洞出現了！！！他會隨機出現在任何地方，時間地點都不固定，碰到黑洞的物品都會隨機變成三種中的一種。最後三十個統一世界的物品就會成王！你，賭嗎？</h2>
+        <h2>
+            <br> <br> <br> <br> <br> <br> 遊戲簡介：剪刀石頭布大戰爭！！你賭誰贏呢？<br> 總共有三十個物品，剪刀、石頭、布各占十個。當剪刀碰到石頭時就會變成石頭，依此類推。<br> 然而，事情沒有這麼簡單。黑洞出現了！！！<br> 他會隨機出現在任何地方，時間地點都不固定，碰到黑洞的物品都會隨機變成三種中的一種。<br> 最後三十個統一世界的物品就會成王！<br> 你，賭嗎？
+        </h2>
     </div>
 
-    <!-- 游戏界面 -->
+    <!-- 遊戲界面 -->
     <div id="gameScreen" style="display: none;">
         <div id="counter">
             <div class="count">
