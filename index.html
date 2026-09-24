@@ -2,9 +2,11 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
     <title>剪刀石頭布遊戲</title>
-    <link rel="stylesheet" href="styles.css">
     <style>
         body {
             background-image: url('picture/background3.png'); /* 替換為你的背景圖路徑 */
@@ -59,14 +61,246 @@
         h2 {
             text-align: center;
         }
+
+        #nicknameError {
+            color: #c62828;
+            text-align: center;
+            min-height: 1.2em;
+            margin: 8px 0 0;
+        }
+
+        /* ===== 轉橫向提示（只在手機直向時顯示） ===== */
+        #rotateOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.92);
+            color: #fff;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+
+        #rotateOverlay .phone {
+            width: 60px;
+            height: 100px;
+            border: 4px solid #fff;
+            border-radius: 12px;
+            position: relative;
+            margin-bottom: 28px;
+            animation: rotatePhone 2s ease-in-out infinite;
+        }
+
+        #rotateOverlay .phone::after {
+            content: '';
+            position: absolute;
+            bottom: 6px;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            margin-left: -5px;
+            border-radius: 50%;
+            background: #fff;
+        }
+
+        #rotateOverlay p {
+            font-size: 20px;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        #rotateOverlay small {
+            display: block;
+            margin-top: 10px;
+            font-size: 14px;
+            opacity: 0.75;
+        }
+
+        @keyframes rotatePhone {
+            0%, 20% { transform: rotate(0deg); }
+            60%, 100% { transform: rotate(-90deg); }
+        }
+
+        html.is-mobile.is-portrait #rotateOverlay {
+            display: flex;
+        }
+
+        /* ===== 手機版版面（橫向） ===== */
+        html.is-mobile,
+        html.is-mobile body {
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html.is-mobile {
+            height: 100%;
+        }
+
+        html.is-mobile body {
+            min-height: 100%;
+            background-attachment: scroll;
+        }
+
+        html.is-mobile #nicknameScreen,
+        html.is-mobile #selectionScreen,
+        html.is-mobile #leaderboardScreen {
+            padding: 10px max(12px, env(safe-area-inset-left)) 10px max(12px, env(safe-area-inset-right));
+            margin: 8px auto;
+            text-align: center;
+        }
+
+        html.is-mobile h2 {
+            font-size: 20px;
+            margin: 6px 0 10px;
+        }
+
+        html.is-mobile #nicknameInput {
+            font-size: 16px; /* 避免 iOS 聚焦時自動放大 */
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid #999;
+            width: min(260px, 60vw);
+            margin-right: 8px;
+            box-sizing: border-box;
+        }
+
+        html.is-mobile button {
+            min-height: 44px;
+            min-width: 88px;
+            font-size: 17px;
+            margin: 4px 6px;
+            touch-action: manipulation;
+        }
+
+        html.is-mobile #selectionScreen button {
+            min-width: 110px;
+            font-size: 20px;
+        }
+
+        /* 說明文字：移除開頭大量換行並縮小字級 */
+        html.is-mobile #gameDescription h2 {
+            font-size: 15px;
+            line-height: 1.6;
+            font-weight: normal;
+            padding: 0 max(16px, env(safe-area-inset-left)) 16px max(16px, env(safe-area-inset-right));
+            margin: 0;
+        }
+
+        html.is-mobile #gameDescription h2 > br:nth-child(-n+6) {
+            display: none;
+        }
+
+        /* 遊戲畫面：全螢幕，計數列在上，畫布填滿其餘空間 */
+        html.is-mobile #gameScreen {
+            position: fixed;
+            inset: 0;
+            margin: 0;
+            padding: 0;
+            max-width: none;
+            border-radius: 0;
+            display: none;
+            flex-direction: column;
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            padding-bottom: env(safe-area-inset-bottom);
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        html.is-mobile #gameScreen.active {
+            display: flex !important;
+        }
+
+        html.is-mobile #counter {
+            flex: 0 0 auto;
+            margin: 0;
+            padding: 4px 0;
+            background: rgba(255, 255, 255, 0.75);
+        }
+
+        html.is-mobile .count {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        html.is-mobile #canvasWrap {
+            flex: 1 1 auto;
+            position: relative;
+            min-height: 0;
+        }
+
+        html.is-mobile #gameCanvas {
+            margin: 0;
+            border: none;
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        /* 結果訊息與按鈕浮在畫布中央 */
+        html.is-mobile #gameInfo {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+        }
+
+        html.is-mobile #gameInfo:has(#resultMessage:not(:empty)) {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 12px 20px;
+            pointer-events: auto;
+        }
+
+        html.is-mobile #resultMessage {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 0 6px;
+        }
+
+        html.is-mobile #resetButtonContainer {
+            pointer-events: auto;
+        }
+
+        html.is-mobile #leaderboard {
+            text-align: left;
+            display: inline-block;
+            max-height: 55vh;
+            overflow-y: auto;
+            margin: 0 0 10px;
+            padding-left: 24px;
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        html.is-mobile.in-game body {
+            overflow: hidden;
+            overscroll-behavior: none;
+        }
     </style>
 </head>
 <body>
+    <!-- 手機直向時的提示 -->
+    <div id="rotateOverlay" role="alertdialog" aria-live="assertive">
+        <div class="phone" aria-hidden="true"></div>
+        <p>請將手機轉為橫向</p>
+        <small>轉成橫向後才能開始遊戲</small>
+    </div>
+
     <!-- 用戶輸入暱稱界面 -->
     <div id="nicknameScreen">
         <h2>請輸入您的暱稱</h2>
-        <input type="text" id="nicknameInput">
+        <input type="text" id="nicknameInput" autocomplete="nickname" enterkeyhint="go">
         <button id="startGameButton">開始遊戲</button>
+        <p id="nicknameError"></p>
     </div>
 
     <!-- 用户选择界面 -->
@@ -97,13 +331,15 @@
                 <span>布: <span id="paperCount">0</span></span>
             </div>
         </div>
-        <canvas id="gameCanvas" width="1500" height="600"></canvas>
-        <div id="gameInfo">
-            <div id="resetButtonContainer" style="display: none;">
-                <button id="resetButton">重置遊戲</button>
-                <button id="nextLevelButton">下一關</button>
+        <div id="canvasWrap">
+            <canvas id="gameCanvas" width="1500" height="600"></canvas>
+            <div id="gameInfo">
+                <p id="resultMessage"></p>
+                <div id="resetButtonContainer" style="display: none;">
+                    <button id="resetButton">重置遊戲</button>
+                    <button id="nextLevelButton">下一關</button>
+                </div>
             </div>
-            <p id="resultMessage"></p>
         </div>
     </div>
 
@@ -111,8 +347,26 @@
     <div id="leaderboardScreen" style="display: none;">
         <h2>排行榜</h2>
         <ul id="leaderboard"></ul>
+        <br>
         <button id="restartGameButton">重新開始</button>
     </div>
+
+    <script>
+        // ===== 手機偵測（在模組載入前執行，避免畫面閃爍） =====
+        (function () {
+            const ua = navigator.userAgent || '';
+            const uaMobile = /Android|iPhone|iPod|Mobile|Windows Phone|BlackBerry|Opera Mini/i.test(ua);
+            // iPadOS 13+ 會回報成 Macintosh，用觸控點判斷
+            const iPadOS = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
+            const iPad = /iPad/.test(ua) || iPadOS;
+            const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+            const smallScreen = Math.min(screen.width, screen.height) <= 820;
+            window.IS_MOBILE = uaMobile || iPad || (coarse && smallScreen);
+            if (window.IS_MOBILE) {
+                document.documentElement.classList.add('is-mobile');
+            }
+        })();
+    </script>
 
     <script type="module">
         // Import Firebase SDK from CDN
@@ -137,14 +391,25 @@
         const analytics = getAnalytics(app);
         const database = getDatabase(app);
 
+        const IS_MOBILE = !!window.IS_MOBILE;
+        const root = document.documentElement;
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        const ITEM_SIZE = 40;
+        // 桌機維持原本設定；手機會依畫布大小自動調整
+        const BASE_ITEM_SIZE = 40;
+        const BASE_SPEED = 8;
+        const BASE_HOLE_MIN_SIZE = 30;
+        const BASE_HOLE_MAX_SIZE = 100;
+        const DESKTOP_WIDTH = 1500;
+        const DESKTOP_HEIGHT = 600;
+
+        let ITEM_SIZE = BASE_ITEM_SIZE;
+        let SPEED = BASE_SPEED;
+        let HOLE_MIN_SIZE = BASE_HOLE_MIN_SIZE;
+        let HOLE_MAX_SIZE = BASE_HOLE_MAX_SIZE;
         const NUM_ITEMS = 10;
-        const SPEED = 8;
-        const HOLE_MIN_SIZE = 30;
-        const HOLE_MAX_SIZE = 100;
         const HOLE_INTERVAL = 10000;
         const HOLE_DURATION = 3000;
 
@@ -152,10 +417,11 @@
         const TYPE_ROCK = 'rock';
         const TYPE_PAPER = 'paper';
 
+        // 優先使用 repo 內的圖片，失敗時改用原本的 imgur 圖
         const IMAGE_PATHS = {
-            [TYPE_SCISSORS]: 'https://i.imgur.com/8Bc0jKL.png',
-            [TYPE_ROCK]: 'https://i.imgur.com/8l6IGrR.png',
-            [TYPE_PAPER]: 'https://i.imgur.com/2lFbPoZ.png'
+            [TYPE_SCISSORS]: ['picture/scissors.png', 'https://i.imgur.com/8Bc0jKL.png'],
+            [TYPE_ROCK]: ['picture/rock.png', 'https://i.imgur.com/8l6IGrR.png'],
+            [TYPE_PAPER]: ['picture/paper.png', 'https://i.imgur.com/2lFbPoZ.png']
         };
 
         let items = [];
@@ -165,22 +431,110 @@
         let userScore = 0;
         let hasStartedFirstLevel = false;
 
+        // 遊戲迴圈狀態
+        let running = false;       // 目前是否有一局在進行
+        let paused = false;        // 手機轉回直向或切到背景時暫停
+        let rafId = null;
+        let holeIntervalId = null;
+        let holeTimeoutId = null;
+        let lastFrameTime = 0;
+
         const images = {};
+        let imagesReady = false;
 
         function loadImages(callback) {
+            if (imagesReady) {
+                callback();
+                return;
+            }
             let loadedImages = 0;
-            const totalImages = Object.keys(IMAGE_PATHS).length;
+            const types = Object.keys(IMAGE_PATHS);
 
-            for (const type in IMAGE_PATHS) {
-                images[type] = new Image();
-                images[type].src = IMAGE_PATHS[type];
-                images[type].onload = () => {
+            types.forEach(type => {
+                const sources = IMAGE_PATHS[type];
+                let attempt = 0;
+                const img = new Image();
+                img.onload = () => {
+                    images[type] = img;
                     loadedImages++;
-                    if (loadedImages === totalImages) {
+                    if (loadedImages === types.length) {
+                        imagesReady = true;
                         callback();
                     }
                 };
+                img.onerror = () => {
+                    attempt++;
+                    if (attempt < sources.length) {
+                        img.src = sources[attempt];
+                    } else {
+                        // 圖片都載入失敗仍讓遊戲可進行（改用文字繪製）
+                        loadedImages++;
+                        if (loadedImages === types.length) {
+                            imagesReady = true;
+                            callback();
+                        }
+                    }
+                };
+                img.src = sources[0];
+            });
+        }
+
+        // ===== 畫布尺寸 =====
+        function computeScale() {
+            if (!IS_MOBILE) {
+                ITEM_SIZE = BASE_ITEM_SIZE;
+                SPEED = BASE_SPEED;
+                HOLE_MIN_SIZE = BASE_HOLE_MIN_SIZE;
+                HOLE_MAX_SIZE = BASE_HOLE_MAX_SIZE;
+                return;
             }
+            // 以桌機 1500x600 的面積為基準等比例縮放
+            const scale = Math.sqrt((canvas.width * canvas.height) / (DESKTOP_WIDTH * DESKTOP_HEIGHT));
+            ITEM_SIZE = Math.max(26, Math.round(BASE_ITEM_SIZE * Math.min(1, scale * 1.35)));
+            SPEED = Math.max(2.5, BASE_SPEED * Math.min(1, scale * 1.1));
+            HOLE_MIN_SIZE = Math.max(24, BASE_HOLE_MIN_SIZE * Math.min(1, scale * 1.35));
+            HOLE_MAX_SIZE = Math.max(60, BASE_HOLE_MAX_SIZE * Math.min(1, scale * 1.35));
+        }
+
+        function resizeCanvas() {
+            if (!IS_MOBILE) {
+                if (canvas.width !== DESKTOP_WIDTH || canvas.height !== DESKTOP_HEIGHT) {
+                    canvas.width = DESKTOP_WIDTH;
+                    canvas.height = DESKTOP_HEIGHT;
+                }
+                computeScale();
+                return;
+            }
+            const wrap = document.getElementById('canvasWrap');
+            const rect = wrap.getBoundingClientRect();
+            const newW = Math.max(1, Math.floor(rect.width));
+            const newH = Math.max(1, Math.floor(rect.height));
+            if (newW === canvas.width && newH === canvas.height) return;
+
+            const oldW = canvas.width;
+            const oldH = canvas.height;
+            canvas.width = newW;
+            canvas.height = newH;
+            computeScale();
+
+            // 已在場上的物品等比例移動到新畫布內
+            items.forEach(item => {
+                item.x = Math.min((item.x / oldW) * newW, newW - ITEM_SIZE);
+                item.y = Math.min((item.y / oldH) * newH, newH - ITEM_SIZE);
+                item.x = Math.max(0, item.x);
+                item.y = Math.max(0, item.y);
+                item.width = ITEM_SIZE;
+                item.height = ITEM_SIZE;
+                const speed = Math.hypot(item.dx, item.dy) || SPEED;
+                const target = Math.min(speed, SPEED * Math.SQRT2);
+                item.dx = (item.dx / speed) * target;
+                item.dy = (item.dy / speed) * target;
+            });
+            if (hole) {
+                hole.x = Math.min(hole.x, Math.max(0, newW - hole.width));
+                hole.y = Math.min(hole.y, Math.max(0, newH - hole.height));
+            }
+            if (running && !paused) drawFrame();
         }
 
         function createRandomItem(type) {
@@ -196,6 +550,7 @@
         }
 
         function createRandomHole() {
+            if (paused || !running) return;
             const size = Math.random() * (HOLE_MAX_SIZE - HOLE_MIN_SIZE) + HOLE_MIN_SIZE;
             hole = {
                 x: Math.random() * (canvas.width - size),
@@ -203,13 +558,16 @@
                 width: size,
                 height: size
             };
-            setTimeout(() => {
+            clearTimeout(holeTimeoutId);
+            holeTimeoutId = setTimeout(() => {
                 hole = null;
             }, HOLE_DURATION);
         }
 
         function initGame() {
+            resizeCanvas();
             items = [];
+            hole = null;
             for (let i = 0; i < NUM_ITEMS; i++) {
                 items.push(createRandomItem(TYPE_SCISSORS));
                 items.push(createRandomItem(TYPE_ROCK));
@@ -219,10 +577,22 @@
             startHoleLoop();
         }
 
+        const FALLBACK_LABEL = {
+            [TYPE_SCISSORS]: '剪',
+            [TYPE_ROCK]: '石',
+            [TYPE_PAPER]: '布'
+        };
+
         function drawItem(item) {
             const img = images[item.type];
             if (img) {
                 ctx.drawImage(img, item.x, item.y, ITEM_SIZE, ITEM_SIZE);
+            } else {
+                ctx.fillStyle = '#222';
+                ctx.font = `${Math.round(ITEM_SIZE * 0.7)}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(FALLBACK_LABEL[item.type], item.x + ITEM_SIZE / 2, item.y + ITEM_SIZE / 2);
             }
         }
 
@@ -233,15 +603,23 @@
             }
         }
 
-        function moveItem(item) {
-            item.x += item.dx;
-            item.y += item.dy;
+        function moveItem(item, step) {
+            item.x += item.dx * step;
+            item.y += item.dy * step;
 
-            if (item.x <= 0 || item.x + item.width >= canvas.width) {
-                item.dx = -item.dx;
+            if (item.x <= 0) {
+                item.x = 0;
+                item.dx = Math.abs(item.dx);
+            } else if (item.x + item.width >= canvas.width) {
+                item.x = canvas.width - item.width;
+                item.dx = -Math.abs(item.dx);
             }
-            if (item.y <= 0 || item.y + item.height >= canvas.height) {
-                item.dy = -item.dy;
+            if (item.y <= 0) {
+                item.y = 0;
+                item.dy = Math.abs(item.dy);
+            } else if (item.y + item.height >= canvas.height) {
+                item.y = canvas.height - item.height;
+                item.dy = -Math.abs(item.dy);
             }
         }
 
@@ -284,19 +662,39 @@
             document.getElementById('paperCount').innerText = paperCount;
         }
 
+        // ===== 畫面切換 =====
+        function showGameScreen(show) {
+            const gameScreen = document.getElementById('gameScreen');
+            gameScreen.style.display = show ? 'block' : 'none';
+            gameScreen.classList.toggle('active', show);
+            root.classList.toggle('in-game', show);
+        }
+
         function resetGame() {
+            stopGame();
             document.getElementById('resetButtonContainer').style.display = 'none';
             document.getElementById('resultMessage').innerText = '';
             userChoice = null;
             document.getElementById('selectionScreen').style.display = 'block';
-            document.getElementById('gameScreen').style.display = 'none';
+            showGameScreen(false);
             document.getElementById('gameDescription').style.display = 'block'; // 顯示說明文字
         }
 
         function startHoleLoop() {
-            setInterval(() => {
+            clearInterval(holeIntervalId);
+            holeIntervalId = setInterval(() => {
                 createRandomHole();
             }, HOLE_INTERVAL);
+        }
+
+        function stopGame() {
+            running = false;
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = null;
+            clearInterval(holeIntervalId);
+            clearTimeout(holeTimeoutId);
+            holeIntervalId = null;
+            hole = null;
         }
 
         function randomizeType(item) {
@@ -304,12 +702,26 @@
             item.type = types[Math.floor(Math.random() * types.length)];
         }
 
-        function gameLoop() {
+        function drawFrame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawHole(hole);
+            items.forEach(drawItem);
+        }
+
+        function gameLoop(now) {
+            rafId = null;
+            if (!running || paused) return;
+
+            // 以 60fps 為基準做時間補償，高更新率螢幕（120Hz）速度才會一致
+            const t = typeof now === 'number' ? now : performance.now();
+            const step = lastFrameTime ? Math.min(3, (t - lastFrameTime) / (1000 / 60)) : 1;
+            lastFrameTime = t;
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             drawHole(hole);
             items.forEach((item, index) => {
-                moveItem(item);
+                moveItem(item, step);
                 drawItem(item);
 
                 if (hole && checkCollision(item, hole)) {
@@ -325,19 +737,35 @@
 
             updateCounts();
 
-            if (!checkGameEnd()) {
-                requestAnimationFrame(gameLoop);
+            if (checkGameEnd()) {
+                stopGame();
+            } else {
+                rafId = requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function resumeLoop() {
+            if (running && !paused && !rafId) {
+                lastFrameTime = 0;
+                rafId = requestAnimationFrame(gameLoop);
             }
         }
 
         function selectChoice(choice) {
+            if (isBlockedByOrientation()) return;
             userChoice = choice;
             document.getElementById('selectionScreen').style.display = 'none';
-            document.getElementById('gameScreen').style.display = 'block';
+            showGameScreen(true);
             document.getElementById('gameDescription').style.display = 'none'; // 隱藏說明文字
-            loadImages(() => {
-                initGame();
-                gameLoop();
+            // 等版面套用後再量畫布大小
+            requestAnimationFrame(() => {
+                loadImages(() => {
+                    stopGame();
+                    initGame();
+                    running = true;
+                    lastFrameTime = 0;
+                    resumeLoop();
+                });
             });
         }
 
@@ -369,19 +797,33 @@
             document.getElementById('resultMessage').innerText = resultMessage;
 
             if (resultMessage === '你輸了！' && hasStartedFirstLevel) {
-                showLeaderboard();
+                // 手機版讓玩家先看到結果再進排行榜
+                if (IS_MOBILE) {
+                    setTimeout(showLeaderboard, 1200);
+                } else {
+                    showLeaderboard();
+                }
             }
         }
 
         function startGame() {
             userName = document.getElementById('nicknameInput').value;
+            const errorEl = document.getElementById('nicknameError');
             if (userName.trim() === '') {
-                alert('請輸入暱稱');
+                if (IS_MOBILE) {
+                    errorEl.innerText = '請輸入暱稱';
+                } else {
+                    alert('請輸入暱稱');
+                }
                 return;
             }
+            errorEl.innerText = '';
+            document.getElementById('nicknameInput').blur();
+            if (isBlockedByOrientation()) return;
             document.getElementById('nicknameScreen').style.display = 'none';
             document.getElementById('selectionScreen').style.display = 'block';
             hasStartedFirstLevel = true;
+            tryLockLandscape();
         }
 
         function showLeaderboard() {
@@ -393,12 +835,12 @@
             });
 
             // Show the leaderboard
-            document.getElementById('gameScreen').style.display = 'none';
+            showGameScreen(false);
             document.getElementById('leaderboardScreen').style.display = 'block';
 
             // Query all scores from the leaderboard and order them by score
             const queryRef = query(leaderboardRef, orderByChild('score'));
-            
+
             get(queryRef).then((snapshot) => {
                 const leaderboard = document.getElementById('leaderboard');
                 leaderboard.innerHTML = '';
@@ -411,7 +853,7 @@
                 // Sort the data array by score in descending order
                 data.sort((a, b) => b.score - a.score);
 
-                // Display top 10 scores
+                // Display top 20 scores
                 data.slice(0, 20).forEach(entry => {
                     const leaderboardItem = document.createElement('li');
                     leaderboardItem.textContent = `${entry.name}: ${entry.score} 分`;
@@ -421,21 +863,103 @@
         }
 
         function restartGame() {
+            stopGame();
             document.getElementById('leaderboardScreen').style.display = 'none';
             document.getElementById('nicknameScreen').style.display = 'block';
+            document.getElementById('resetButtonContainer').style.display = 'none';
             userScore = 0;
-            
+
             document.getElementById('resultMessage').innerText = '';
             hasStartedFirstLevel = false;
         }
 
         function startNextLevel() {
+            stopGame();
             document.getElementById('resetButtonContainer').style.display = 'none';
             document.getElementById('resultMessage').innerText = '';
             userChoice = null;
             document.getElementById('selectionScreen').style.display = 'block';
-            document.getElementById('gameScreen').style.display = 'none';
+            showGameScreen(false);
             document.getElementById('gameDescription').style.display = 'block'; // 顯示說明文字
+        }
+
+        // ===== 手機方向偵測 =====
+        function isPortrait() {
+            if (window.matchMedia) {
+                return window.matchMedia('(orientation: portrait)').matches;
+            }
+            return window.innerHeight > window.innerWidth;
+        }
+
+        function isBlockedByOrientation() {
+            return IS_MOBILE && isPortrait();
+        }
+
+        function setPaused(value) {
+            if (paused === value) return;
+            paused = value;
+            if (paused) {
+                if (rafId) cancelAnimationFrame(rafId);
+                rafId = null;
+                clearInterval(holeIntervalId);
+                holeIntervalId = null;
+            } else if (running) {
+                startHoleLoop();
+                resumeLoop();
+            }
+        }
+
+        function updateOrientation() {
+            if (!IS_MOBILE) return;
+            const portrait = isPortrait();
+            root.classList.toggle('is-portrait', portrait);
+            root.classList.toggle('is-landscape', !portrait);
+            if (portrait) {
+                document.activeElement && document.activeElement.blur && document.activeElement.blur();
+            }
+            // 直向時暫停遊戲，轉回橫向後繼續
+            setPaused(portrait || document.hidden);
+            if (!portrait) {
+                // 旋轉後瀏覽器需要一點時間更新尺寸
+                requestAnimationFrame(resizeCanvas);
+                setTimeout(resizeCanvas, 300);
+            }
+        }
+
+        // Android Chrome 支援在全螢幕下鎖定橫向；iOS 不支援則略過
+        function tryLockLandscape() {
+            if (!IS_MOBILE) return;
+            try {
+                const el = document.documentElement;
+                const lock = () => {
+                    if (screen.orientation && screen.orientation.lock) {
+                        screen.orientation.lock('landscape').catch(() => {});
+                    }
+                };
+                if (!document.fullscreenElement && el.requestFullscreen) {
+                    el.requestFullscreen({ navigationUI: 'hide' }).then(lock).catch(() => {});
+                } else {
+                    lock();
+                }
+            } catch (e) {
+                // 忽略不支援的瀏覽器
+            }
+        }
+
+        if (IS_MOBILE) {
+            updateOrientation();
+            window.addEventListener('resize', updateOrientation);
+            window.addEventListener('orientationchange', updateOrientation);
+            if (window.matchMedia) {
+                const mq = window.matchMedia('(orientation: portrait)');
+                if (mq.addEventListener) mq.addEventListener('change', updateOrientation);
+            }
+            document.addEventListener('visibilitychange', () => {
+                setPaused(isPortrait() || document.hidden);
+            });
+            document.getElementById('nicknameInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') startGame();
+            });
         }
 
         // 使用 addEventListener 綁定按鈕事件
