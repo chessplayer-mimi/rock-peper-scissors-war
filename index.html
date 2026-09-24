@@ -7,6 +7,35 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
     <title>剪刀石頭布遊戲</title>
+    <script>
+        // ===== 手機偵測與方向判斷（放在 head，不依賴 Firebase 模組） =====
+        (function () {
+            var ua = navigator.userAgent || '';
+            var uaMobile = /Android|iPhone|iPod|Mobile|Windows Phone|BlackBerry|Opera Mini/i.test(ua);
+            // iPadOS 13+ 與 iPhone「要求桌面版網站」會回報成 Macintosh，用觸控點判斷
+            var touchMac = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
+            var iPad = /iPad/.test(ua) || touchMac;
+            var coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+            var smallScreen = Math.min(screen.width, screen.height) <= 820;
+            var root = document.documentElement;
+            window.IS_MOBILE = uaMobile || iPad || (coarse && smallScreen);
+            if (!window.IS_MOBILE) return;
+            root.className += ' is-mobile';
+            function applyOrientation() {
+                var portrait = window.matchMedia
+                    ? window.matchMedia('(orientation: portrait)').matches
+                    : window.innerHeight > window.innerWidth;
+                root.classList.toggle('is-portrait', portrait);
+                root.classList.toggle('is-landscape', !portrait);
+            }
+            applyOrientation();
+            window.addEventListener('resize', applyOrientation);
+            window.addEventListener('orientationchange', function () {
+                applyOrientation();
+                setTimeout(applyOrientation, 300);
+            });
+        })();
+    </script>
     <style>
         body {
             background-image: url('picture/background3.png'); /* 替換為你的背景圖路徑 */
@@ -73,7 +102,10 @@
         #rotateOverlay {
             display: none;
             position: fixed;
-            inset: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
             z-index: 9999;
             background: rgba(0, 0, 0, 0.92);
             color: #fff;
@@ -125,8 +157,29 @@
             60%, 100% { transform: rotate(-90deg); }
         }
 
-        html.is-mobile.is-portrait #rotateOverlay {
-            display: flex;
+        /* 由 CSS 直接判斷方向，不必等 JavaScript 執行 */
+        @media (orientation: portrait) {
+            html.is-mobile #rotateOverlay {
+                display: flex;
+            }
+        }
+
+        /* 保險：即使偵測腳本失效，觸控手機直向時也會顯示 */
+        @media (orientation: portrait) and (hover: none) and (pointer: coarse) {
+            #rotateOverlay {
+                display: flex;
+            }
+        }
+
+        /* 純 CSS 備援：就算 JavaScript 沒執行，觸控裝置直向時也會顯示提示 */
+        @media (orientation: portrait) and (hover: none) and (pointer: coarse) {
+            #rotateOverlay {
+                display: flex;
+            }
+        }
+
+        html.is-mobile.is-landscape #rotateOverlay {
+            display: none;
         }
 
         /* ===== 手機版版面（橫向） ===== */
@@ -143,6 +196,8 @@
         html.is-mobile body {
             min-height: 100%;
             background-attachment: scroll;
+            /* 原圖 6400x3600 太大，手機改用縮小版 */
+            background-image: url('picture/background3-mobile.jpg');
         }
 
         html.is-mobile #nicknameScreen,
@@ -197,7 +252,10 @@
         /* 遊戲畫面：全螢幕，計數列在上，畫布填滿其餘空間 */
         html.is-mobile #gameScreen {
             position: fixed;
-            inset: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
             margin: 0;
             padding: 0;
             max-width: none;
@@ -237,7 +295,10 @@
             margin: 0;
             border: none;
             position: absolute;
-            inset: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             touch-action: none;
@@ -351,22 +412,6 @@
         <button id="restartGameButton">重新開始</button>
     </div>
 
-    <script>
-        // ===== 手機偵測（在模組載入前執行，避免畫面閃爍） =====
-        (function () {
-            const ua = navigator.userAgent || '';
-            const uaMobile = /Android|iPhone|iPod|Mobile|Windows Phone|BlackBerry|Opera Mini/i.test(ua);
-            // iPadOS 13+ 會回報成 Macintosh，用觸控點判斷
-            const iPadOS = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
-            const iPad = /iPad/.test(ua) || iPadOS;
-            const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-            const smallScreen = Math.min(screen.width, screen.height) <= 820;
-            window.IS_MOBILE = uaMobile || iPad || (coarse && smallScreen);
-            if (window.IS_MOBILE) {
-                document.documentElement.classList.add('is-mobile');
-            }
-        })();
-    </script>
 
     <script type="module">
         // Import Firebase SDK from CDN
@@ -885,6 +930,9 @@
 
         // ===== 手機方向偵測 =====
         function isPortrait() {
+            if (typeof window.RPS_isPortrait === 'function') {
+                return window.RPS_isPortrait();
+            }
             if (window.matchMedia) {
                 return window.matchMedia('(orientation: portrait)').matches;
             }
